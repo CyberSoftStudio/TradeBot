@@ -1,8 +1,6 @@
-import bitmex
-
 class Trader_bitmex:
-    def __init__(self, auth_info, test=False):
-        self.client = bitmex.bitmex(api_key=auth_info['api_public_key'], api_secret=auth_info['api_secret_key'], test=test)
+    def __init__(self, client):
+        self.client = client
 
     def make_order(self, orders):
         result = []
