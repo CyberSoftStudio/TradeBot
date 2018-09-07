@@ -21,8 +21,14 @@ class Bot:
         timestamps = [x['timestamp'] for x in exchange_data]
         return np.array(close), timestamps
 
-    @staticmethod
-    def prepare_order(interval):
+    def prepare_buy_order(self, interval, symbol='xbt'):
+        self.trade_system.get_orderbook(symbol)
+
+        return 0
+
+    def prepare_sell_order(self, interval, symbol='xbt'):
+        self.trade_system.get_orderbook(symbol)
+
         return 0
 
     @staticmethod
