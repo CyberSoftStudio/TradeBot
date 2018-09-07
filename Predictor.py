@@ -18,8 +18,8 @@ class Predictor:
             'wcname': 'gaus8',
             'extract_alpha': 0.5,
             'model_key': 2,
-            'model_json_path': '../models/model_cwt_10k.json',  # model_nclasses_46_1
-            'model_h5_path': '../models/model_cwt_10k.h5'
+            'model_json_path': './models/model_cwt_10k.json',  # model_nclasses_46_1
+            'model_h5_path': './models/model_cwt_10k.h5'
         }
 
         plib.load_cnn(self.config['model_json_path'], self.config['model_h5_path'])

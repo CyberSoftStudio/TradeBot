@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request
 import json
+import time
+from Bot import Bot
 
 # My scripts import
 from libs.prediction_lib import predict, load_cnn
@@ -46,8 +48,9 @@ def make_prediction():
 
 
 if __name__ == "__main__":
-    model_json_path = '../models/model_cwt_10k.json'  # model_nclasses_46_1
-    model_h5_path = '../models/model_cwt_10k.h5'
-    load_cnn(model_json_path, model_h5_path)
+    bot = Bot()
+    bot.trading_loop()
+    bot.prediction_loop()
+    time.sleep(10)
 
 app.run(host='0.0.0.0')

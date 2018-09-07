@@ -1,10 +1,10 @@
-import scripts.Bot as Bot
+from Predictor import Predictor
 import math
 import numpy as np
 
 intervals = []
 
-with open('../train_data/ltcusd_m5.txt', 'r') as f:
+with open('./train_data/ltcusd_m5_2.txt', 'r') as f:
     lines = list(f)
     price_series = [float(x) for x in lines[0][1:-2].split(',')]
     price_times = [str(x) for x in lines[1][1:-2].split(",")]
@@ -16,14 +16,14 @@ print(price_times[-2000], price_times[-1])
 price_series = np.array(price_series)
 window_size = 256
 
-bot = Bot.Bot([])
+bot = Predictor([])
 # {'scale':200, 'window_size':1024, 'mult_const':4, 'assurance': 0.9, 'model_key': 2}
 # {'assurance': 0.9, 'key': 2}
 bot.change_config({'assurance': 0.9, 'model_key': 2})
 
 limit = len(price_series) - window_size
 
-for i in range(20000, limit):
+for i in range(0, limit):
     print('{}/{}'.format(i, limit))
     bot.set_data(price_series[i:i + window_size])
 
