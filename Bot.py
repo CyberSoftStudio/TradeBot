@@ -12,6 +12,7 @@ class Bot:
             'api_secret': 'virblf2ij2unSG8VNuwsq5VTw0axnIVYwodKlgeAO0wGqVBS'
         }
         self.keypoint_queue = []
+
         self.data = []
         self.predictor = Predictor([])
         self.trade_system = TradingSystem(auth_info=auth_info, test=test)
