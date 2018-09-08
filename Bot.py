@@ -7,12 +7,7 @@ import numpy as np
 
 class Bot:
     def __init__(self, auth_info, test=False, exchange_name = None):
-        self.config = {
-            'api_public': 'M9C8G0sR_xyAH-P-McPtGtFU',
-            'api_secret': 'virblf2ij2unSG8VNuwsq5VTw0axnIVYwodKlgeAO0wGqVBS'
-        }
         self.keypoint_queue = []
-
         self.data = []
         self.predictor = Predictor([])
         self.trade_system = TradingSystem(auth_info=auth_info, test=test)
