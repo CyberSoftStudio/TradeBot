@@ -5,13 +5,13 @@ class Trader_bitmex:
     def make_order(self, orders):
         result = []
         for order in orders:
-            result.append(self.client.Order.Order_new(symbol=order.symbol, orderQty = order.quantity, price = order.price).result())
+            result.append(self.client.Order.Order_new(symbol=order['symbol'], orderQty = order['quantity'], price=order['price']).result(2))
 
     def cancel_order(self, order_id):
-        self.client.Order.Order_cancel(orderID=order_id).result()
+        self.client.Order.Order_cancel(orderID=order_id).result(2)
 
     def cancel_all(self):
-        self.client.Order.Order_cancelAll().result()
+        self.client.Order.Order_cancelAll().result(2)
 
     def amend_order(self, order_id, new_order):
-        self.client.Order.Order_amend(orderID=order_id, price=new_order.price)
+        self.client.Order.Order_amend(orderID=order_id, price=new_order.price).result(2)

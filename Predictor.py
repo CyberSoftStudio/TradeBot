@@ -3,7 +3,7 @@ import libs.extremumlib as elib
 import math
 import numpy as np
 import json
-
+import matplotlib.pyplot as plt
 
 class Predictor:
     def __init__(self, data):
@@ -74,9 +74,8 @@ class Predictor:
         key             = self.config['model_key']
 
         trend = elib.get_trend(self.data)
-
         window = self.data[-window_size:]
-        correct_rects, segmentations, _ = plib.predict(
+        correct_rects, segmentations, M = plib.predict(
             window,
             scale=scale,
             assurance=assurance,
@@ -87,6 +86,9 @@ class Predictor:
             key=key,
             mult_const=mult_const
         )
+
+        # plt.matshow(M)
+        # plt.show()
 
         if len(segmentations):
             try:
@@ -103,7 +105,12 @@ class Predictor:
                 interval['center'] += y
 
                 return interval
-            except:
+            except Exception as err:
+                # print(err)
+                # x, y = correct_rects[0].x * mult_const
+                # plt.matshow(elib.bound_filter(elib.linear(M[x:x+32, y:y+32]), alpha=self.config['extract_alpha']))
+                # plt.matshow(M)
+                # plt.show()
                 print("Can't predict interval")
                 return {}
 

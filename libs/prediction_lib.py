@@ -140,22 +140,49 @@ def predict(window, scale=50, assurance=0.9, wdname='db6', wcname='morl', shift 
 def predict_interval(segm, cmp=lambda a, b: len(a.points) > len(b.points)):
     minimum = None
     maximum = None
-    for s in segm:
+    segments = list(filter(lambda x: len(x.points) > 10, segm))
+
+
+
+    for s in segments:
+        s.recalc_convex_rect()
+
+    segments = sorted(segments, key=lambda s: s.miny)
+    print(len(segments), [x.type for x in segments])
+
+    ptr = 0
+    for i in range(len(segments)):
+        s = segments[i]
         if s.type == 1.:
-            try:
-                if cmp(s, maximum):
-                    maximum = s
-            except:
-                maximum = s
-        else:
-            try:
-                if cmp(s, minimum):
-                    minimum = s
-            except:
-                minimum = s
+            maximum = s
+            break
+        ptr += 1
+
+    for i in range(ptr, len(segments)):
+        s = segments[i]
+        if s.type == -1.:
+            minimum = s
+            break
+
+
+    # for s in segments:
+    #     if s.type == 1.:
+    #         try:
+    #             if cmp(s, maximum):
+    #                 maximum = s
+    #         except:
+    #             maximum = s
+    #     else:
+    #         try:
+    #             if cmp(s, minimum):
+    #                 minimum = s
+    #         except:
+    #             minimum = s
 
     maximum.recalc_convex_rect()
     minimum.recalc_convex_rect()
+
+    print(maximum.convex_rect, minimum.convex_rect)
 
     assert maximum.maxy < minimum.miny
 

@@ -25,3 +25,6 @@ class TradingSystem:
 
     def get_candles(self, count=256):
         return self.monitor.get_candles(count=count)
+
+    def get_balances(self):
+        return self.monitor.get_balances()
