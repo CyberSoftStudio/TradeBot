@@ -5,6 +5,7 @@ from Bot import Bot
 
 # My scripts import
 from libs.prediction_lib import predict, load_cnn
+from Predictor import Predictor
 
 app = Flask(__name__)
 
@@ -23,23 +24,20 @@ def make_prediction():
     try:
         print(request.data)
         window = json.loads(request.data)['window']
+        timestamp = json.loads(request.data)['timestamp']
         print(window)
         # rects, _, _ = predict(window)
-        correct_rects, segmentations, M = predict(
-            window,
-            scale=scale,
-            assurance=0.5,
-            wdname=wdname,
-            wcname=wcname,
-            shift=shift,
-            extract_alpha=extract_alpha,
-            key=1,
-            mult_const=mult_const
-        )
+        predictor.set_data(window)
+        interval = predictor.predict()
+        print(interval)
+        result = "{}"
+        if len(interval) > 0:
+            interval['miny'] = timestamp * (interval['miny'] - 226) * 300
+            interval['center'] = timestamp * (interval['center'] - 226) * 300
 
-        result = [rect.get_parameters() for rect in correct_rects]
-        print(result)
-        return jsonify(result)
+            result = json.dumps(interval)
+
+        return result
 
     except Exception as e:
         print(request.args)
@@ -47,10 +45,15 @@ def make_prediction():
         return jsonify({'error': True, 'why':str(e)})
 
 
+@app.route('/set_configuration', methods=['GET', 'POST'])
+def set_configuration():
+    config = json.loads(request.data)
+    predictor.change_config(config)
+    return jsonify({'status':'OK'})
+
+
 if __name__ == "__main__":
-    bot = Bot()
-    bot.trading_loop()
-    bot.prediction_loop()
-    time.sleep(10)
+    predictor = Predictor([])
+
 
 app.run(host='0.0.0.0')

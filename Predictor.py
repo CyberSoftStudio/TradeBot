@@ -5,6 +5,7 @@ import numpy as np
 import json
 import matplotlib.pyplot as plt
 
+
 class Predictor:
     def __init__(self, data):
         self.data = np.array(data)
@@ -75,7 +76,7 @@ class Predictor:
 
         trend = elib.get_trend(self.data)
         window = self.data[-window_size:]
-        correct_rects, segmentations, M = plib.predict(
+        correct_rects, segmentations, (M, linear_coef) = plib.predict(
             window,
             scale=scale,
             assurance=assurance,
@@ -93,12 +94,16 @@ class Predictor:
         if len(segmentations):
             try:
                 interval = plib.predict_interval(segmentations[0].segmentation)
+
                 x, y = correct_rects[0].x * mult_const
 
                 interval['maxy'] *= mult_const
                 interval['miny'] *= mult_const
                 interval['center'] *= mult_const
+                interval['amplitude'] *= linear_coef
                 interval['trend'] = math.atan((trend[-1] - trend[-30])/30)
+
+                print("Interval trend", interval['trend'])
 
                 interval['maxy'] += y
                 interval['miny'] += y

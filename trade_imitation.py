@@ -1,10 +1,12 @@
-import scripts.Bot as Bot
+from Predictor_test import Predictor as Bot
 import math
+import matplotlib.pyplot as plt
+import libs.extremumlib as elib
 import numpy as np
 
 intervals = []
 
-with open('../train_data/ltcusd_m5.txt', 'r') as f:
+with open('./train_data/ltcusd_m5_2.txt', 'r') as f:
     lines = list(f)
     price_series = [float(x) for x in lines[0][1:-2].split(',')]
     # price_times = [str(x) for x in lines[1][1:-2].split(",")]
@@ -15,38 +17,37 @@ with open('../train_data/ltcusd_m5.txt', 'r') as f:
 price_series = np.array(price_series)
 window_size = 256
 
-bot = Bot.Bot([])
+bot = Bot([])
 bot.change_config({
     'assurance': 0.9,
     'model_key': 2,
-    'scale':200,
-    'window_size': 1024,
-    'mult_const':4
+    'scale':50,
+    'window_size': 256,
+    'mult_const':1
 })
 
 
-limit = len(price_series) - window_size
+limit = min(len(price_series) - window_size, 700 - 256)
 
-for i in range(20000, limit):
+for i in range(max(limit- 2000, 0), limit):
     print('{}/{}'.format(i, limit))
     bot.set_data(price_series[i:i + window_size])
-
-    interval = bot.predict()
+    window = price_series[i + bot.config['shift']: i + window_size + bot.config['shift']]
+    interval, M = bot.predict()
 
     if len(interval) > 0:
         interval['miny'] += i
         interval['maxy'] += i
         interval['center'] += i
-
         print("Interval predicted", interval)
-        intervals.append(interval)
+        intervals.append((interval, M, window, i))
 
 balance = 10
 cur_time = 0
 
 print("Initial balance is", balance)
 
-intervals = sorted(intervals, key=lambda x: (x['miny'], x['center'] - x['miny']))
+intervals = sorted(intervals, key=lambda x: (x[0]['miny'], x[0]['center'] - x[0]['miny']))
 
 trade_count = 0
 average_balance = 0
@@ -54,16 +55,46 @@ average_balance = 0
 bad_attempts = 0
 bad_volume = 0
 
-for x in intervals:
-    if x['miny'] < cur_time or x['trend'] < 0:
+for x, mat, win, i in intervals:
+    if x['miny'] < cur_time or x['trend'] < 0 or x['amplitude'] < 0.4:
         continue
 
     else:
         trade_count += 1
         #что на самом деле получается balance * (1/(price1 + alpha)) - balance * (price1 - alpha)
         fee = 0.000
+
         additional_balance = ((price_series[x['center']] - fee)/(price_series[x['miny']] + fee) - 1) * balance - 0.00015
         average_balance += abs(additional_balance)
+
+        if additional_balance < 0:
+            print(x['amplitude'])
+            scale, wdname, wcname = 50, 'db6', 'gaus8'
+            fig = plt.figure()
+            ax = fig.add_subplot(311)
+            ax.matshow(mat)
+            ax.axvline(x=x['miny'] - i)
+            ax.axvline(x=x['maxy'] - i)
+
+            true_mat = elib.get_cwt_swt(win,
+                    scale=scale,
+                    mask=[1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+                    wdname=wdname,
+                    wcname=wcname
+                    )
+
+            ax = fig.add_subplot(312)
+            ax.matshow(true_mat)
+            ax.axvline(x=x['miny'] - i)
+            ax.axvline(x=x['maxy'] - i)
+
+            ax = fig.add_subplot(313)
+            ax.plot(win)
+            ax.axvline(x=x['miny'] - i)
+            ax.axvline(x=x['maxy'] - i)
+            ax.axvline(x=x['center'] - i, color='r')
+
+            plt.show()
 
         if additional_balance < 0:
             bad_attempts += 1

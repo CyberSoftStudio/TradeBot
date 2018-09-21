@@ -38,6 +38,7 @@ class Segment:
         self.points = points
         self.convex = []
         self.convex_rect = []
+        self.amplitude = 0
         self.type = 0
         self.maxx = None
         self.minx = None
@@ -110,6 +111,7 @@ class Segment:
 
         self.points = np.array(self.points)
         self.recalc_convex_rect()
+
         return self
 
 
@@ -150,28 +152,24 @@ class Segmentation:
         self.used[p[0], p[1]] = True
 
         segment.points.append(p)
+        segment.amplitude = max(segment.amplitude, abs(self.plane_orig[p[0], p[1]]))
 
         steps = [(1, 0), (0, 1), (-1, 0), (0, -1)]
 
         for step in steps:
             np = (p[0] + step[0], p[1] + step[1])
             if self._ok(np):
-                # print("new point ", np)
                 self.dfs(np, segment)
 
     def show(self):
         result = self.plane_orig.copy()
         paths = [x.convex_rect for x in self.segmentation]
-        # print("paths length", len(paths))
         return result, paths
 
     def recalc_separators(self):
         self.segmentation = sorted(self.segmentation, key = lambda a: a.convex_rect[0][1])
-        # print([s.convex_rect for s in self.segmentation])
         self.separators = []
-        # print("number of segments ", len(self.segmentation))
         for i in range(1, len(self.segmentation)):
-            # print(self.segmentation[i - 1].convex_rect[1][1], self.segmentation[i].convex_rect[0][1])
             self.separators.append((self.segmentation[i - 1].convex_rect[2][1] + self.segmentation[i].convex_rect[0][1])/2)
 
         self.separators = np.array(self.separators)

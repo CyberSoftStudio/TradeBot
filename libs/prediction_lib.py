@@ -62,6 +62,11 @@ def predict(window, scale=50, assurance=0.9, wdname='db6', wcname='morl', shift 
         window = list(window)
         tmp = window[-shift:]
         tmp.reverse()
+
+        for i in range(len(tmp)):
+            cur = tmp[i] - tmp[0]
+            tmp[i] = tmp[0] - cur
+
         window.extend(tmp)
         window = np.array(window[shift:])
     except Exception as e:
@@ -75,6 +80,7 @@ def predict(window, scale=50, assurance=0.9, wdname='db6', wcname='morl', shift 
                     wcname=wcname
                     )
 
+    linear_coef = np.abs(M).max()
     M = linear(M)
     M = ndimage.zoom(M, 1/mult_const)
     # M = misc.imresize(M, (49, 256))
@@ -134,7 +140,7 @@ def predict(window, scale=50, assurance=0.9, wdname='db6', wcname='morl', shift 
         segmentations.append(Segmentation(wow[i]))
         segmentations[-1].extract(alpha=extract_alpha)
 
-    return correct_rects, segmentations, M
+    return correct_rects, segmentations, (M, linear_coef)
 
 
 def predict_interval(segm, cmp=lambda a, b: len(a.points) > len(b.points)):
@@ -142,42 +148,39 @@ def predict_interval(segm, cmp=lambda a, b: len(a.points) > len(b.points)):
     maximum = None
     segments = list(filter(lambda x: len(x.points) > 10, segm))
 
-
-
     for s in segments:
         s.recalc_convex_rect()
 
     segments = sorted(segments, key=lambda s: s.miny)
     print(len(segments), [x.type for x in segments])
 
-    ptr = 0
-    for i in range(len(segments)):
-        s = segments[i]
-        if s.type == 1.:
-            maximum = s
-            break
-        ptr += 1
-
-    for i in range(ptr, len(segments)):
-        s = segments[i]
-        if s.type == -1.:
-            minimum = s
-            break
-
-
-    # for s in segments:
+    # ptr = 0
+    # for i in range(len(segments)):
+    #     s = segments[i]
     #     if s.type == 1.:
-    #         try:
-    #             if cmp(s, maximum):
-    #                 maximum = s
-    #         except:
-    #             maximum = s
-    #     else:
-    #         try:
-    #             if cmp(s, minimum):
-    #                 minimum = s
-    #         except:
-    #             minimum = s
+    #         maximum = s
+    #         break
+    #     ptr += 1
+    #
+    # for i in range(ptr, len(segments)):
+    #     s = segments[i]
+    #     if s.type == -1.:
+    #         minimum = s
+    #         break
+
+    for s in segments:
+        if s.type == 1.:
+            try:
+                if cmp(s, maximum):
+                    maximum = s
+            except:
+                maximum = s
+        else:
+            try:
+                if cmp(s, minimum):
+                    minimum = s
+            except:
+                minimum = s
 
     maximum.recalc_convex_rect()
     minimum.recalc_convex_rect()
@@ -189,8 +192,11 @@ def predict_interval(segm, cmp=lambda a, b: len(a.points) > len(b.points)):
     predicted_interval = {
         'miny': minimum.maxy + minimum.miny - maximum.maxy,
         'maxy': minimum.maxy + minimum.miny - maximum.miny,
-        'center': minimum.maxy + minimum.miny - (maximum.maxy + maximum.miny) // 2
+        'amplitude': maximum.amplitude,
+        'center': 0
     }
+
+    predicted_interval['center'] = int(0.5 * predicted_interval['miny'] + 0.5 * predicted_interval['maxy'])
 
     return predicted_interval
 

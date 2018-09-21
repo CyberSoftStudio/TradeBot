@@ -23,8 +23,8 @@ class TradingSystem:
     def get_orderbook(self, symbol, count=50):
         return self.monitor.get_orderbook(symbol, count=count)
 
-    def get_candles(self, count=256):
-        return self.monitor.get_candles(count=count)
+    def get_candles(self, count=256, symbol='XBT'):
+        return self.monitor.get_candles(count=count, symbol=symbol)
 
     def get_balances(self):
         return self.monitor.get_balances()

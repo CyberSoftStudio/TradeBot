@@ -6,11 +6,11 @@ class Monitor_bitmex:
     def __init__(self, client):
         self.client = client
 
-    def get_candles(self, count):
+    def get_candles(self, count, symbol='xbt'):
         config = {
             'binSize': '5m',
             'partial': True,
-            'symbol': 'XBT',
+            'symbol': symbol,
             'count': count,
             'reverse': True
         }
