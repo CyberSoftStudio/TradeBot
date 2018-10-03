@@ -63,7 +63,25 @@ class Predictor:
         new_config = json.load(open(config_json_file))
         self.config = self._merge_config(self.config, new_config)
 
-    def predict(self):
+    @staticmethod
+    def get_trend_1(trend):
+        return math.atan((trend[-1] - trend[-30])/30)
+
+    @staticmethod
+    def get_trend_2(trend):
+        return math.atan(trend[-1] - trend[-2])
+
+    @staticmethod
+    def get_trend_3(trend):
+        res = [math.atan(trend[-1] - trend[-i]) for i in range(2, 11)]
+        res = sorted(res)
+        return res[len(res)//2 + 1]
+
+    def predict(self, get_trend = None):
+
+        if get_trend is None:
+            get_trend = self.get_trend_1
+
         mult_const      = self.config['mult_const']
         window_size     = self.config['window_size']
         shift           = self.config['shift']
@@ -88,9 +106,6 @@ class Predictor:
             mult_const=mult_const
         )
 
-        # plt.matshow(M)
-        # plt.show()
-
         if len(segmentations):
             try:
                 interval = plib.predict_interval(segmentations[0].segmentation)
@@ -101,14 +116,16 @@ class Predictor:
                 interval['miny'] *= mult_const
                 interval['center'] *= mult_const
                 interval['amplitude'] *= linear_coef
-                interval['trend'] = math.atan((trend[-1] - trend[-30])/30)
+                interval['trend'] = get_trend(trend)
 
                 print("Interval trend", interval['trend'])
 
                 interval['maxy'] += y
                 interval['miny'] += y
                 interval['center'] += y
+                interval['miny'] = max(226, interval['miny'])
 
+                assert(interval['center'] > interval['miny'])
                 return interval
             except Exception as err:
                 # print(err)

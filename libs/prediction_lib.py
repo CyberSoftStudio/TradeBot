@@ -83,17 +83,9 @@ def predict(window, scale=50, assurance=0.9, wdname='db6', wcname='morl', shift 
     linear_coef = np.abs(M).max()
     M = linear(M)
     M = ndimage.zoom(M, 1/mult_const)
-    # M = misc.imresize(M, (49, 256))
-    # M = linear(M)
-
-    # print(M)
     shift = shift // mult_const
     scale = scale // mult_const
-
-
-    # M.resize((50, 256))
     # M = bound_filter(M, alpha=0.5)
-
     test = []
     coords = []
 
@@ -104,7 +96,6 @@ def predict(window, scale=50, assurance=0.9, wdname='db6', wcname='morl', shift 
             coords.append((i, j))
 
     test = np.array(test)
-    # print(test.shape)
     test = test.reshape(test.shape[0], block_sizex, block_sizey, 1)
     result = cnn.predict(test, verbose=verbose)
 
@@ -136,11 +127,12 @@ def predict(window, scale=50, assurance=0.9, wdname='db6', wcname='morl', shift 
     for i in range(len(wow)):
         cur_rect = correct_rects[i]
         cur_coords = (cur_rect.x[1], cur_rect.x[0])
-
         segmentations.append(Segmentation(wow[i]))
         segmentations[-1].extract(alpha=extract_alpha)
 
     return correct_rects, segmentations, (M, linear_coef)
+
+
 
 
 def predict_interval(segm, cmp=lambda a, b: len(a.points) > len(b.points)):
@@ -153,20 +145,6 @@ def predict_interval(segm, cmp=lambda a, b: len(a.points) > len(b.points)):
 
     segments = sorted(segments, key=lambda s: s.miny)
     print(len(segments), [x.type for x in segments])
-
-    # ptr = 0
-    # for i in range(len(segments)):
-    #     s = segments[i]
-    #     if s.type == 1.:
-    #         maximum = s
-    #         break
-    #     ptr += 1
-    #
-    # for i in range(ptr, len(segments)):
-    #     s = segments[i]
-    #     if s.type == -1.:
-    #         minimum = s
-    #         break
 
     for s in segments:
         if s.type == 1.:
@@ -181,6 +159,51 @@ def predict_interval(segm, cmp=lambda a, b: len(a.points) > len(b.points)):
                     minimum = s
             except:
                 minimum = s
+
+    maximum.recalc_convex_rect()
+    minimum.recalc_convex_rect()
+
+    print(maximum.convex_rect, minimum.convex_rect)
+
+    assert maximum.maxy < minimum.miny
+
+    miny = minimum.maxy + minimum.miny - maximum.maxy
+    maxy = minimum.maxy + minimum.miny - maximum.miny
+
+    predicted_interval = {
+        'miny': (minimum.maxy + minimum.miny)//2,
+        'maxy': minimum.maxy + minimum.miny - maximum.miny,
+        'amplitude': maximum.amplitude,
+        'center': int(0.5 * miny + 0.5 * maxy)
+    }
+
+    return predicted_interval
+
+
+def predict_interval_pm(segm, cmp=lambda a, b: len(a.points) > len(b.points)):
+    minimum = None
+    maximum = None
+    segments = list(filter(lambda x: len(x.points) > 10, segm))
+
+    for s in segments:
+        s.recalc_convex_rect()
+
+    segments = sorted(segments, key=lambda s: s.miny)
+    print(len(segments), [x.type for x in segments])
+
+    ptr = 0
+    for i in range(len(segments)):
+        s = segments[i]
+        if s.type == 1.:
+            maximum = s
+            break
+        ptr += 1
+
+    for i in range(ptr, len(segments)):
+        s = segments[i]
+        if s.type == -1.:
+            minimum = s
+            break
 
     maximum.recalc_convex_rect()
     minimum.recalc_convex_rect()

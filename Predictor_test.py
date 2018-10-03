@@ -109,7 +109,7 @@ class Predictor:
                 interval['miny'] += y
                 interval['center'] += y
 
-                return interval
+                return interval, M
             except Exception as err:
                 # print(err)
                 # x, y = correct_rects[0].x * mult_const
@@ -117,9 +117,9 @@ class Predictor:
                 # plt.matshow(M)
                 # plt.show()
                 print("Can't predict interval")
-                return {}
+                return {}, M
 
-        return {}
+        return {}, M
 
     # def process(self):
 
