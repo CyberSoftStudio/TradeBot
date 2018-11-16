@@ -7,8 +7,9 @@ import pandas as pd
 import json
 
 './train_data/eurusd_h1.csv'
+FILE = 'eurusd_m5_201808010800_201809282355'
 
-data = pd.read_csv('./train_data/eurusd_h1.csv')
+data = pd.read_csv('./train_data/' + FILE + '.csv')
 
 # with open('./train_data/eurusd_h1.txt', 'r') as f:
 #     lines = list(f)
@@ -20,17 +21,21 @@ data = pd.read_csv('./train_data/eurusd_h1.csv')
 
 price_series = data['close'].values
 time_series = data['time'].values
+plt.plot(price_series)
+plt.show()
 
-data = pd.read_csv('./results/eurusd_h1.csv')
+data = pd.read_csv('./results/' + FILE + '.csv')
+print(data)
 
 csv_data = data.copy()
-csv_data[['miny', 'center', 'maxy']] = csv_data[['miny', 'center', 'maxy']].applymap(lambda x : time_series[x])
-# csv_data.to_csv('./results/eurusd_m5_4_datetime.csv', index=None)
+csv_data[['start', 'miny', 'center', 'maxy']] = csv_data[['start', 'miny', 'center', 'maxy']].applymap(lambda x : time_series[min(x + 30, len(time_series) - 1)])
+csv_data.to_csv('./results/{}_datetime.csv'.format(FILE), index=None)
 
 intervals = []
 
 for i in range(data.shape[0]):
     interval = {
+        'start': [],
         'miny': [],
         'maxy': [],
         'center' : [],
@@ -53,39 +58,72 @@ average_balance = 0
 bad_attempts = 0
 bad_volume = 0
 
+shift = 30
+window_size = 256
+
+
+def get_trend_1(trend):
+    return math.atan((trend[-1] - trend[-30]) / 30)
+
+def get_trend_2(trend):
+    return math.atan(trend[-1] - trend[-6])
+
+def get_trend_3(trend):
+    res = [math.atan(trend[-1] - trend[-i]) for i in range(2, 11)]
+    res = sorted(res)
+    return res[len(res) // 2 + 1]
+
+def get_trend_4(trend):
+    res = [math.atan(trend[-1] - trend[-i]) for i in range(2, 11)]
+    res = sorted(res)
+    return sum(res) / len(res)
+
 
 for x in intervals:
     if x['amplitude'] < 0.001:
         continue
+    start = x['start'] + 30
+    window = price_series[start - window_size : start]
+    window = elib.wavedec_filtration(window, [1, 0, 0, 0 , 0 , 0, 0 ,0 ,  0, 0, 0, 0,0 ,0 ,0])
+
+    trend = get_trend_4(window)
+    miny = x['miny'] + 30
+    center = x['center'] + 30
+
+    # miny, center = center, miny
     trade_count += 1
-    miny = x['miny']
-    center = x['center']
-    if x['trend'] >= 0.00001:
-        additional_balance = price_series[center] - price_series[miny] - 0.0003     #((price_series[x['center']] - fee)/(price_series[x['miny']] + fee) - 1) * balance - 0.00015
-    else:
-        additional_balance = price_series[miny] - price_series[center] - 0.0003
-    average_balance += abs(additional_balance)
 
-    if additional_balance < 0:
-        print(x['trend'], x['amplitude'], time_series[miny], time_series[center], price_series[miny], price_series[center], additional_balance, '-')
-    else:
-        print(x['trend'], x['amplitude'], time_series[miny], time_series[center], price_series[miny], price_series[center], additional_balance, '+')
+    try:
+        if True:
+            additional_balance = price_series[center] - price_series[miny] - 0.0003     #((price_series[x['center']] - fee)/(price_series[x['miny']] + fee) - 1) * balance - 0.00015
+        else:
+            additional_balance = price_series[miny] - price_series[center] - 0.0003
+        average_balance += abs(additional_balance)
 
-        # fig, ax = plt.subplots()
-        # plt.plot(price_series)
-        # ax.axvline(x=x['miny'], color='g')
-        # ax.axvline(x=x['maxy'], color='g')
-        # ax.axvline(x=x['center'], color='r')
-        # mng = plt.get_current_fig_manager()
-        # mng.resize(*mng.window.maxsize())
-        # plt.show()
+        if additional_balance < 0:
+            print(x['trend'], x['amplitude'], time_series[miny], time_series[center], price_series[miny], price_series[center], additional_balance, '-')
+        else:
+            print(x['trend'], x['amplitude'], time_series[miny], time_series[center], price_series[miny], price_series[center], additional_balance, '+')
 
+        if True:
 
-    if additional_balance < 0:
-        bad_attempts += 1
-        bad_volume += abs(additional_balance)
+            # fig, ax = plt.subplots()
+            # plt.plot(price_series)
+            # ax.axvline(x=x['miny'] + shift, color='g')
+            # ax.axvline(x=x['maxy'] + shift, color='g')
+            # ax.axvline(x=x['center'] + shift, color='r')
+            # mng = plt.get_current_fig_manager()
+            # mng.resize(*mng.window.maxsize())
+            # plt.show()
+            pass
 
-    balance += additional_balance
+        if additional_balance < 0:
+            bad_attempts += 1
+            bad_volume += abs(additional_balance)
+
+        balance += additional_balance
+    except:
+        pass
     
 
     cur_time = x['center']

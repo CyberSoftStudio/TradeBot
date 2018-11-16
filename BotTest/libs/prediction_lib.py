@@ -1,8 +1,8 @@
 import numpy as np
 # My scripts import
-from libs.Segmentation import Segmentation, Segment
-from libs.Rect import Rect
-from libs.extremumlib import get_cwt, get_cwt_swt, get_cwt_swt_min, linear, bound_filter, linear_normal
+from BotTest.libs.Segmentation import Segmentation, Segment
+from BotTest.libs.Rect import Rect
+from BotTest.libs.extremumlib import get_cwt, get_cwt_swt, linear, bound_filter, linear_normal
 
 from keras.models import model_from_json
 import scipy.ndimage as ndimage
@@ -55,18 +55,7 @@ def load_cnn(model_json_path, model_h5_path):
     cnn._make_predict_function()
 
 
-def predict(
-        window,
-        scale=50,
-        assurance=0.9,
-        wdname='db6', wcname='morl',
-        shift = 30,
-        block_sizex = 32, block_sizey = 32,
-        key = 2,
-        extract_alpha = 0.5,
-        mult_const = 1,
-        verbose=0,
-        minmod = False):
+def predict(window, scale=50, assurance=0.9, wdname='db6', wcname='morl', shift = 30, block_sizex = 32, block_sizey = 32, key = 2, extract_alpha = 0.5, mult_const = 1, verbose=0):
 
     assert len(window) >= block_sizey + 10
     try:
@@ -84,20 +73,12 @@ def predict(
         print(e)
         return [],[],[]
 
-    if minmod:
-        M = get_cwt_swt_min(window,
-                            scale=scale,
-                            mask=[1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-                            wdname=wdname,
-                            wcname=wcname
-                            )
-    else:
-        M = get_cwt_swt(window,
-                        scale=scale,
-                        mask=[1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-                        wdname=wdname,
-                        wcname=wcname
-                        )
+    M = get_cwt_swt(window,
+                    scale=scale,
+                    mask=[1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+                    wdname=wdname,
+                    wcname=wcname
+                    )
 
     linear_coef = np.abs(M).max()
     M = linear(M)
@@ -150,8 +131,6 @@ def predict(
         segmentations[-1].extract(alpha=extract_alpha)
 
     return correct_rects, segmentations, (M, linear_coef)
-
-
 
 
 def predict_interval(segm, cmp=lambda a, b: len(a.points) > len(b.points)):

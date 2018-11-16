@@ -1,6 +1,6 @@
 import numpy as np
 import pywt
-from libs.differentiationlib import get_extremums2d, wavedec_filtration, mult_rows, extrapolation, swt_filtration
+from BotTest.libs.differentiationlib import get_extremums2d, wavedec_filtration, mult_rows, extrapolation, swt_filtration
 
 
 def detrend(window, wname='db6'):
@@ -68,26 +68,9 @@ def get_cwt(window, mask = (0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0), wdname='db6', wcna
     return tmp * phi
 
 
-def get_cwt_swt(window, mask = (0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0), wdname='db6', wcname='morl', scale=40, step = 1):
+def get_cwt_swt(window, mask = (0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0), wdname='db6', wcname='morl', scale=40):
     window = detrend(window, wdname)
     window = swt_filtration(window, mask, wdname)
-    decomposition, _ = pywt.cwt(window, np.arange(1, scale, step), wcname)
-
-    tmp = np.abs(decomposition)
-    phi = np.cos(np.angle(decomposition))
-
-    Elon_Musk = True
-
-    return tmp * phi
-
-
-def get_cwt_swt_min(window, mask = (0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0), wdname='db6', wcname='morl', scale=40):
-    window = detrend(window, wdname)
-    window = swt_filtration(window, mask, wdname)
-
-    for i in range(len(window)):
-        window[i] = -window[i]
-
     decomposition, _ = pywt.cwt(window, np.arange(1, scale), wcname)
 
     tmp = np.abs(decomposition)

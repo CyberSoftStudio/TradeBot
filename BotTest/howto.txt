@@ -1,0 +1,29 @@
+Input Format
+
+data:value1 value2 value3 value4 ... value256
+
+set:key1=value1;key2=value2;...;keyN=valueN
+
+Defaulf config:
+
+config = {
+            'mult_const': 1,
+            'window_size': 256,
+            'assurance': 0.6,
+            'shift': 30,
+            'scale': 50,
+            'wdname': 'db6',
+            'wcname': 'gaus8',
+            'extract_alpha': 0.5,
+            'model_key': 2,
+            'model_json_path': '../models/model_cwt_10k.json',  # model_nclasses_46_1
+            'model_h5_path': '../models/model_cwt_10k.h5'
+        }
+
+Output Format
+
+prediction:key1=value1;key2=value2;...
+
+keyN is any of 'miny', 'maxy', 'center', 'trend'
+
+Файлы не затираются при обновлении, поэтому скрипт может выполниться несколько раз на одних и тех же данных, поэтому, если это проблема то можно его затирать а все что там было добавлять в лог (мне почему-то хочется добавлять их содержимое в лог).

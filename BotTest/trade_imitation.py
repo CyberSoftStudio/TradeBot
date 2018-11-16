@@ -4,22 +4,23 @@ import matplotlib.pyplot as plt
 import libs.extremumlib as elib
 import numpy as np
 import pandas as pd
-import libs.histogramma_lib as hlib
 import json
 intervals = []
 
 
-FILE = 'eurusd_m5_201808010800_201809282355.csv'
+data = pd.read_csv('./train_data/eurusd_h1.csv')
 
+# with open('./train_data/eurusd_h1.txt', 'r') as f:
+#     lines = list(f)
+#     price_series = [float(x) for x in lines[0][1:-2].split(',')]
+#     # price_times = [str(x) for x in lines[1][1:-2].split(",")]
+#     # print(line)
+#     n = len(price_series)
+#     # print(price_series)
 
-data = pd.read_csv('./train_data/' + FILE)
-
-values = slice(len(data) -6000, len(data))
-price_series = data['close'].values[values]
-time_series = data['time'].values[values]
-
-print(len(price_series))
-
+price_series = data['close'].values
+time_series = data['time'].values
+# price_series = np.array(price_series)
 window_size = 256
 
 bot = Bot([])
@@ -32,33 +33,18 @@ bot.change_config({
 })
 
 
-limit = len(price_series)
-# limit = 10
+limit = len(price_series) - window_size
+# limit = 100
 
 init_time = time_series[0]
 delta_time = 300
-shift = bot.config['shift']
 
 for i in range(0, limit):
     print('{}/{}'.format(i + 1, limit))
-    try:
-        window = price_series[i: i + window_size]
-        window = list(window)
-        # tmp = window[-shift:]
-        # tmp.reverse()
-        #
-        # for i in range(len(tmp)):
-        #     cur = tmp[i] - tmp[0]
-        #     tmp[i] = tmp[0] - cur
-
-        # window.extend(tmp)
-        # window = np.array(window[shift:])
-        bot.set_data(window)
-        window = price_series[i + bot.config['shift']: i + window_size + bot.config['shift']]
-        interval = bot.predict()
-        M = np.zeros((2, 2))
-    except:
-        break
+    bot.set_data(price_series[i:i + window_size])
+    window = price_series[i + bot.config['shift']: i + window_size + bot.config['shift']]
+    interval = bot.predict(get_trend=Bot.get_trend_2)
+    M = np.zeros((2, 2))
 
     if len(interval) > 0:
         interval['miny'] = int(interval['miny'])
@@ -66,12 +52,10 @@ for i in range(0, limit):
         interval['center'] = int(interval['center'])
         interval['trend'] = float(interval['trend'])
         interval['amplitude'] = float(interval['amplitude'])
-        interval['start'] = 225
 
         interval['miny'] += i
         interval['maxy'] += i
         interval['center'] += i
-        interval['start'] += i
 
         # interval['miny'] = init_time + interval['miny'] * delta_time
         # interval['maxy'] = init_time + interval['maxy'] * delta_time
@@ -89,23 +73,24 @@ intervals = sorted(intervals, key=lambda x: (x[0]['miny'], x[0]['center'] - x[0]
 
 resdata = [x[0] for x in intervals]
 
-intervals_json = {
-    'start':[],
-    'miny':[],
-    'maxy':[],
-    'center':[],
-    'trend' :[],
-    'amplitude':[]
-}
+with open('./results/eurusd_h1_gt3.txt', 'w') as file:
+    intervals_json = {
+        'miny':[],
+        'maxy':[],
+        'center':[],
+        'trend' :[],
+        'amplitude':[]
+    }
 
-for x in resdata:
+    for x in resdata:
+        print(init_time + delta_time * x['miny'], init_time + delta_time * x['center'], init_time + delta_time * x['maxy'], file=file)
 
-    for key, val in x.items():
-        intervals_json[key].append(val)
+        for key, val in x.items():
+            intervals_json[key].append(val)
 
 resdata = pd.DataFrame(intervals_json)
 
-resdata.to_csv('./results/' + FILE, index=None)
+resdata.to_csv('./results/eurusd_h1_gt3.csv', index=None)
 
 trade_count = 0
 average_balance = 0

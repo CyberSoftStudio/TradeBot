@@ -1,5 +1,5 @@
-import libs.prediction_lib as plib
-import libs.extremumlib as elib
+import BotTest.libs.prediction_lib as plib
+import BotTest.libs.extremumlib as elib
 import math
 import numpy as np
 import json
@@ -77,7 +77,7 @@ class Predictor:
         res = sorted(res)
         return res[len(res)//2 + 1]
 
-    def predict(self, get_trend = None, minmod = False):
+    def predict(self, get_trend = None):
 
         if get_trend is None:
             get_trend = self.get_trend_1
@@ -103,8 +103,7 @@ class Predictor:
             shift=shift,
             extract_alpha=extract_alpha,
             key=key,
-            mult_const=mult_const,
-            minmod=minmod
+            mult_const=mult_const
         )
 
         if len(segmentations):
